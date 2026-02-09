@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#6366f1">
+    <link rel="manifest" href="/static/manifest.json">
+    <title>AutoSuno - Random Song Creator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: white;
+        }
+
+        .container {
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 3em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .subtitle {
+            font-size: 1.2em;
+            margin-bottom: 40px;
+            opacity: 0.9;
+        }
+
+        .create-button {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            border: none;
+            border-radius: 50%;
+            width: 200px;
+            height: 200px;
+            font-size: 4em;
+            cursor: pointer;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin: 20px auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .create-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 15px 50px rgba(0,0,0,0.4);
+        }
+
+        .create-button:active {
+            transform: scale(0.95);
+        }
+
+        .create-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid rgba(255,255,255,0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .result {
+            display: none;
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            margin-top: 30px;
+            text-align: left;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+        }
+
+        .result.active {
+            display: block;
+        }
+
+        .result h2 {
+            margin-bottom: 20px;
+            font-size: 2em;
+        }
+
+        .result-section {
+            margin-bottom: 20px;
+        }
+
+        .result-label {
+            font-weight: bold;
+            color: #fbbf24;
+            margin-bottom: 5px;
+        }
+
+        .result-content {
+            background: rgba(0,0,0,0.2);
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 5px;
+            white-space: pre-wrap;
+            font-size: 0.9em;
+            line-height: 1.6;
+        }
+
+        .instructions {
+            background: rgba(255,255,255,0.2);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        .suno-link {
+            display: inline-block;
+            background: #10b981;
+            color: white;
+            padding: 15px 30px;
+            border-radius: 10px;
+            text-decoration: none;
+            margin-top: 20px;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+
+        .suno-link:hover {
+            background: #059669;
+        }
+
+        .genre-selector {
+            margin: 20px 0;
+        }
+
+        .genre-selector select {
+            padding: 10px 20px;
+            font-size: 1em;
+            border-radius: 10px;
+            border: none;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            cursor: pointer;
+        }
+
+        .genre-selector select option {
+            background: #667eea;
+            color: white;
+        }
+
+        .error {
+            background: rgba(239, 68, 68, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .error.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎵 AutoSuno</h1>
+        <p class="subtitle">Create Random Songs with AI</p>
+
+        <div class="genre-selector">
+            <select id="genreSelect">
+                <option value="">Random Genre</option>
+            </select>
+        </div>
+
+        <button class="create-button" id="createButton" onclick="createSong()">
+            🎸
+        </button>
+
+        <p style="margin-top: 10px; font-size: 1.2em;">Click to Create!</p>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p style="margin-top: 10px;">Creating your song...</p>
+        </div>
+
+        <div class="error" id="error">
+            <strong>Error:</strong> <span id="errorMessage"></span>
+        </div>
+
+        <div class="result" id="result">
+            <h2 id="songTitle">Song Created!</h2>
+            
+            <div class="result-section">
+                <div class="result-label">Genre:</div>
+                <div id="songGenre"></div>
+            </div>
+
+            <div class="result-section">
+                <div class="result-label">Concept:</div>
+                <div class="result-content" id="songConcept"></div>
+            </div>
+
+            <div class="result-section">
+                <div class="result-label">Suno Prompt:</div>
+                <div class="result-content" id="sunoPrompt"></div>
+            </div>
+
+            <div class="instructions">
+                <div class="result-label">Next Steps:</div>
+                <div id="instructions"></div>
+                <a href="https://suno.com/create" target="_blank" class="suno-link">
+                    🎵 Open Suno AI →
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Load available genres
+        fetch('/genres')
+            .then(response => response.json())
+            .then(data => {
+                const select = document.getElementById('genreSelect');
+                data.genres.forEach(genre => {
+                    const option = document.createElement('option');
+                    option.value = genre;
+                    option.textContent = genre.charAt(0).toUpperCase() + genre.slice(1);
+                    select.appendChild(option);
+                });
+            });
+
+        function createSong() {
+            const button = document.getElementById('createButton');
+            const loading = document.getElementById('loading');
+            const result = document.getElementById('result');
+            const error = document.getElementById('error');
+            const genreSelect = document.getElementById('genreSelect');
+            
+            // Reset UI
+            button.disabled = true;
+            loading.classList.add('active');
+            result.classList.remove('active');
+            error.classList.remove('active');
+
+            const genre = genreSelect.value || null;
+
+            // Call the API
+            fetch('/create', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ genre: genre })
+            })
+            .then(response => response.json())
+            .then(data => {
+                loading.classList.remove('active');
+                button.disabled = false;
+
+                if (data.success) {
+                    // Display the result
+                    const songData = data.result;
+                    document.getElementById('songTitle').textContent = songData.song_concept.title;
+                    document.getElementById('songGenre').textContent = songData.song_concept.genre;
+                    document.getElementById('songConcept').textContent = songData.song_concept.description;
+                    document.getElementById('sunoPrompt').textContent = songData.suno_prompt;
+                    document.getElementById('instructions').textContent = songData.suno_result.instructions;
+                    
+                    result.classList.add('active');
+                } else {
+                    // Show error
+                    document.getElementById('errorMessage').textContent = data.error;
+                    error.classList.add('active');
+                }
+            })
+            .catch(err => {
+                loading.classList.remove('active');
+                button.disabled = false;
+                document.getElementById('errorMessage').textContent = err.message;
+                error.classList.add('active');
+            });
+        }
+
+        // Support for adding to home screen
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+        });
+    </script>
+</body>
+</html>
