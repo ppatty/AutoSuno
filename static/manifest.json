@@ -1,11 +1,11 @@
 {
-  "name": "AutoSuno - Random Song Creator",
-  "short_name": "AutoSuno",
-  "description": "Create random songs with Google Gemini and Suno AI",
+  "name": "Shift Pocket Logger",
+  "short_name": "ShiftLogger",
+  "description": "Quickly capture shift swaps, unavailability, and rostering requests from your phone.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#667eea",
-  "theme_color": "#6366f1",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
   "orientation": "portrait",
   "icons": [
     {
